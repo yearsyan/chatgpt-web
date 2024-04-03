@@ -1,5 +1,9 @@
 import type { FetchFn } from 'chatgpt'
 
+export enum NextAction {
+  LOGIN = 1,
+}
+
 export interface RequestProps {
   prompt: string
   options?: ChatContext

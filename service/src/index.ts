@@ -1,10 +1,9 @@
 import express from 'express'
-import type { RequestProps } from './types'
+import { NextAction, type RequestProps } from './types'
 import type { ChatMessage } from './chatgpt'
 import { chatConfig, chatReplyProcess, currentModel } from './chatgpt'
-import { auth } from './middleware/auth'
+import { auth, createToken } from './middleware/auth'
 import { limiter } from './middleware/limiter'
-import { isNotEmptyString } from './utils/is'
 
 const app = express()
 const router = express.Router()
@@ -55,14 +54,21 @@ router.post('/config', auth, async (req, res) => {
   }
 })
 
+router.post('/token', async (req, res) => {
+  const { pwd } = req.body as { pwd: string }
+  if (pwd === process.env.AI_PWD) {
+    res.send({ status: 'Success', message: '', data: { token: createToken() } })
+    return
+  }
+  res.send({ status: 'Fail', message: '密码错误 | Password not correct', data: null })
+})
+
 router.post('/session', async (req, res) => {
   try {
-    const AUTH_SECRET_KEY = process.env.AUTH_SECRET_KEY
-    const hasAuth = isNotEmptyString(AUTH_SECRET_KEY)
-    res.send({ status: 'Success', message: '', data: { auth: hasAuth, model: currentModel() } })
+    res.send({ status: 'Success', message: '', data: { auth: true, model: currentModel() } })
   }
   catch (error) {
-    res.send({ status: 'Fail', message: error.message, data: null })
+    res.send({ status: 'Fail', message: error.message, data: null, action: NextAction.LOGIN })
   }
 })
 
